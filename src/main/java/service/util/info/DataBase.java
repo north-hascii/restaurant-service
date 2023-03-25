@@ -1,4 +1,4 @@
-package service.util;
+package service.util.info;
 
 import service.models.cooker.Cooker;
 import service.models.cooker.CookerList;

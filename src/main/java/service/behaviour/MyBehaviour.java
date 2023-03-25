@@ -8,7 +8,6 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import service.agents.OntologiesTypes;
 import service.util.JsonMessage;
-import service.util.Theme;
 
 public class MyBehaviour extends Behaviour {
     String message;
@@ -59,7 +58,7 @@ public class MyBehaviour extends Behaviour {
         try {
             if (name == null) {
                 DFAgentDescription[] result = DFService.search(myAgent, template);
-                Theme.print(result[id].getName().toString(), Theme.CYAN);
+//                Theme.print(result[id].getName().toString(), Theme.CYAN);
                 if (receiverName != null) {
                     for (var agent : result) {
                         if (agent.getName().equals(receiverName)) {

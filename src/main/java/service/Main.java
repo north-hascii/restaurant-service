@@ -1,8 +1,8 @@
 package service;
 
-import service.util.Configurator;
-import service.util.DataBase;
-import service.util.Theme;
+import service.util.info.Configurator;
+import service.util.info.DataBase;
+import service.util.env.Theme;
 
 import java.io.File;
 
@@ -13,8 +13,8 @@ public class Main {
     //
     // Green - create an Agent
     // Red - delete an Agent
-    // Cyan - Send a message
-    // Purple - Receive a message
+    // Cyan - Some Info
+    // Purple - Some Info
     // Yellow - Some Info
     // Blue -
 
@@ -27,13 +27,16 @@ public class Main {
     public static DataBase db;
 
     public static void main(String[] args) {
+        // Delete logs
         File file = new File("logs");
         deleteDirectoryRec(file);
 
+        // Read Database
         Configurator configurator = new Configurator();
         boolean isDataBaseCorrect = configurator.setUpDataBase();
 
         if (isDataBaseCorrect) {
+            // MAS starts
             MainController mainController = new MainController();
             mainController.initAgents();
         } else {

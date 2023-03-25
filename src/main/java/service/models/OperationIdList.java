@@ -1,4 +1,4 @@
-package service.agents;
+package service.models;
 
 import java.util.ArrayList;
 import java.util.List;

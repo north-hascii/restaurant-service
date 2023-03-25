@@ -9,9 +9,10 @@
    -   logs/error.log - содержит JSON ошибку, которая могла прервать программу.
    -   logs/operations.log - содержит JSON'ы всех операций, созданных во время работы ресторана.
    -   logs/processes.log - содержит JSON'ы всех процессов, созданных во время работы ресторана.
- 
-[hw3-diagram.drawio.pdf](https://github.com/north-hascii/restaurant-service/files/11074196/hw3-diagram.drawio.pdf)
-![hw3-diagram](https://user-images.githubusercontent.com/57373162/227831989-fac9a049-4c83-4fe4-812d-4935e6d675df.jpg)
+
+// На диаграмму добавить не все действия... </br>
+
+![hw3-diagram.jpg](src%2Fmain%2Fresources%2Fhw3-diagram.jpg)
 
 #### Что реализовано:
 1) Были сделаны все агенты, кроме Агента продукта, так как этот тип Агента не имел смысла в программе. 
@@ -28,4 +29,4 @@
 1) "equip_active": true - означает, что Оборудование занято <br>
    "equip_active": false - означает, что Оборудование свободно <br>
    аналогично с поварами.
-2) Среди "products" не дублируются 
+2) Посетители приходят сразу же и не уходят пока не получат всю еду 

@@ -12,8 +12,8 @@ import service.annotationsetup.SetAnnotationNumber;
 import service.behaviour.MyBehaviour;
 import service.models.dishCard.DishCardList;
 import service.models.order.Order;
-import service.util.JSONParser;
-import service.util.Theme;
+import service.util.info.JSONParser;
+import service.util.env.Theme;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -21,10 +21,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Order agent. Reports to the Management Agent.
  * Possible actions:
- * 1. Creates an order at the request of the Management Agent
- * 2. Sends the approximate order completion time to the visitor Agent
- * 3. "Asks" the process agents to provide an estimate of the order completion time
- * 4. Processes the process agents' responses about the waiting time
+ * 1. The agent receives an order from the Supervisor
+ * 2. Sends the order for verification to the Storage Agent
+ * 3. Creates a process agent for each dish
+ * 4. Dies at the end of the process
  */
 //@JadeAgent(number = 1)
 public class OrderAgent extends Agent implements SetAnnotationNumber {
@@ -33,8 +33,7 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
     private Order order;
     private DishCardList dishCardList = null;
 
-    private static AtomicInteger processCounter = new AtomicInteger(0);
-    //    private A
+    private static final AtomicInteger processCounter = new AtomicInteger(0);
     private String supervisorAgentName;
 
     @Override
@@ -69,8 +68,6 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
         }
 
         addBehaviour(new MyBehaviour(JSONParser.gson.toJson(order), OntologiesTypes.ORDER_STORAGE, AgentTypes.STORAGE_AGENT));
-//        addBehaviour(new SendMessageOnce(JsonParser.gson.toJson(order), OntologiesTypes.orderToStorage,
-//                AgentTypes.storageAgent, 0));
 
         // Set up Listener
         addBehaviour(new ListenServer(this));
@@ -81,8 +78,10 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
         for (var dishCard : dishCardList.dish_cards) {
             try {
                 var processID = processCounter.addAndGet(1);
-                controller.createNewAgent("ProcessAgent" + processID, ProcessAgent.class.getName(), new Object[]{processID, dishCard, getName()}).start();
-//                processCounter.addAndGet(1);
+                controller.createNewAgent("ProcessAgent" + processID,
+                        ProcessAgent.class.getName(),
+                        new Object[]{processID, dishCard, getName()}
+                ).start();
             } catch (StaleProxyException e) {
                 throw new RuntimeException(e);
             }
@@ -118,15 +117,28 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
             if (msg != null) {
                 if (msg.getOntology().equals(OntologiesTypes.STORAGE_ORDER)) {
                     var dishCardsJson = msg.getContent();
-                    System.out.println(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + dishCardsJson);
+                    Theme.print(AGENT_TYPE + " " + myAgent.getName() +
+                            " got message from " + msg.getSender().getName() + ": " + dishCardsJson, Theme.RESET
+                    );
                     dishCardList = JSONParser.gson.fromJson(dishCardsJson, DishCardList.class);
 //                    System.out.println(dishCardList);
                     createProcessAgents();
                 } else if (msg.getOntology().equals(OntologiesTypes.PROCESS_ORDER)) {
                     var json = msg.getContent();
-                    System.out.println(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + json);
-                    addBehaviour(new MyBehaviour("Delete process.", OntologiesTypes.ORDER_DELETE_PROCESS, msg.getSender()));
-                    addBehaviour(new MyBehaviour(JSONParser.gson.toJson(order), OntologiesTypes.ORDER_SUPERVISOR, AgentTypes.SUPERVISOR_AGENT, supervisorAgentName));
+                    Theme.print(AGENT_TYPE + " " + myAgent.getName() +
+                            " got message from " + msg.getSender().getName() + ": " + json, Theme.RESET
+                    );
+
+                    addBehaviour(new MyBehaviour("Delete process.",
+                            OntologiesTypes.ORDER_DELETE_PROCESS,
+                            msg.getSender())
+                    );
+
+                    addBehaviour(new MyBehaviour(JSONParser.gson.toJson(order),
+                            OntologiesTypes.ORDER_SUPERVISOR,
+                            AgentTypes.SUPERVISOR_AGENT,
+                            supervisorAgentName)
+                    );
                 }
             } else {
                 block();

@@ -7,13 +7,13 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
-import service.util.MyLog;
+import service.util.info.MyLog;
 import service.annotationsetup.SetAnnotationNumber;
 import service.behaviour.MyBehaviour;
 import service.models.cooker.Cooker;
 import service.models.operation.OperationLog;
-import service.util.JSONParser;
-import service.util.Theme;
+import service.util.info.JSONParser;
+import service.util.env.Theme;
 
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Agent operation.
  * Possible actions:
- * 1. Requests the Management Agent to reserve the cook and equipment to perform the operation
+ * 1. Agent executes orders within a certain time and returns a successful response to the cook
  */
 //@JadeAgent(number = 5)
 public class OperationAgent extends Agent implements SetAnnotationNumber {
@@ -67,7 +67,9 @@ public class OperationAgent extends Agent implements SetAnnotationNumber {
             }
         }
 
-        Theme.print(AGENT_TYPE + ": " + getName() + " with myID=" + myID + " is ready." + cookerID + " " + cooker, Theme.GREEN);
+        Theme.print(AGENT_TYPE + ": " + getName() + " with myID=" +
+                myID + " is ready." + cookerID + " " + cooker, Theme.GREEN
+        );
 
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
@@ -86,7 +88,12 @@ public class OperationAgent extends Agent implements SetAnnotationNumber {
         end = new Date();
 
         addBehaviour(new ListenServer());
-        addBehaviour(new MyBehaviour(JSONParser.gson.toJson("Success"), OntologiesTypes.OPERATION_COOKER, AgentTypes.COOKER_AGENT, cookerAgentName));
+
+        addBehaviour(new MyBehaviour(JSONParser.gson.toJson("Success"),
+                OntologiesTypes.OPERATION_COOKER,
+                AgentTypes.COOKER_AGENT,
+                cookerAgentName)
+        );
     }
 
     @Override
@@ -111,8 +118,19 @@ public class OperationAgent extends Agent implements SetAnnotationNumber {
             if (msg != null) {
                 if (msg.getOntology().equals(OntologiesTypes.COOKER_OPERATION)) {
                     var dishCardJson = msg.getContent();
-                    Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + dishCardJson, Theme.RESET);
-                    OperationLog operationLog = new OperationLog(myID, processID, dishCardID, begin, end, cooker.cook_id, false);
+
+                    Theme.print(AGENT_TYPE + " " + myAgent.getName() +
+                            " got message from " + msg.getSender().getName() + ": " + dishCardJson, Theme.RESET
+                    );
+
+                    OperationLog operationLog = new OperationLog(myID,
+                            processID,
+                            dishCardID,
+                            begin,
+                            end,
+                            cooker.cook_id,
+                            false
+                    );
 
                     MyLog.LogOperation(JSONParser.gson.toJson(operationLog));
 

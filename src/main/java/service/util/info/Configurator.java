@@ -1,16 +1,15 @@
-package service.util;
+package service.util.info;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import service.Main;
-import service.models.MyErrorInner;
+import service.util.env.Theme;
 import service.models.dishCard.DishCard;
-import service.models.MyError;
 import service.models.operation.Operation;
+import service.util.errors.MyError;
+import service.util.errors.MyErrorInner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 
 
 public class Configurator {
@@ -47,17 +46,26 @@ public class Configurator {
             Main.db.setCookersList(JSONParser.parseJson(new TypeReference<>() {
             }, JSONParser.readDataFromJsonFile(mainFolder + cookersFileName)));
 
+            if (Main.db.getCookersList().cookers.size() == 0) {
+                throw new IllegalArgumentException("There are no cooks in the kitchen, the restaurant can't work like this");
+            }
+
             Main.db.setDishCardsList(JSONParser.parseJson(new TypeReference<>() {
             }, JSONParser.readDataFromJsonFile(mainFolder + dishCardsFileName)));
+
+            if (Main.db.getDishCardsList().dish_cards.size() == 0) {
+                throw new IllegalArgumentException("The restaurant has no dishes, the restaurant can't work like this");
+            }
 
             Main.db.setEquipmentList(JSONParser.parseJson(new TypeReference<>() {
             }, JSONParser.readDataFromJsonFile(mainFolder + equipmentFileName)));
 
-            Main.db.setEquipmentTypesList(JSONParser.parseJson(new TypeReference<>() {
-            }, JSONParser.readDataFromJsonFile(mainFolder + equipmentTypeFileName)));
-
             Main.db.setMenuList(JSONParser.parseJson(new TypeReference<>() {
             }, JSONParser.readDataFromJsonFile(mainFolder + menuDishesFileName)));
+
+            if (Main.db.getMenuList().menu_dishes.size() == 0) {
+                throw new IllegalArgumentException("The restaurant has an empty menu, the restaurant can't work like this");
+            }
 
             Main.db.setOperationTypesList(JSONParser.parseJson(new TypeReference<>() {
             }, JSONParser.readDataFromJsonFile(mainFolder + operationTypesFileName)));
@@ -65,8 +73,16 @@ public class Configurator {
             Main.db.setProductTypesList(JSONParser.parseJson(new TypeReference<>() {
             }, JSONParser.readDataFromJsonFile(mainFolder + productTypesFileName)));
 
+            if (Main.db.getProductTypesList().product_types.size() == 0) {
+                throw new IllegalArgumentException("The restaurant has no products, the restaurant can't work like this");
+            }
+
             Main.db.setProductInStorageList(JSONParser.parseJson(new TypeReference<>() {
             }, JSONParser.readDataFromJsonFile(mainFolder + productsFileName)));
+
+            if (Main.db.getProductInStorageList().products.size() == 0) {
+                throw new IllegalArgumentException("The restaurant has no products, the restaurant can't work like this");
+            }
 
             Main.db.setOrderList(JSONParser.parseJson(new TypeReference<>() {
             }, JSONParser.readDataFromJsonFile(mainFolder + visitorsOrdersFileName)));

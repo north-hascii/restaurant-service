@@ -8,9 +8,8 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import service.annotationsetup.SetAnnotationNumber;
-import service.models.cooker.Cooker;
 import service.models.equipment.Equipment;
-import service.util.Theme;
+import service.util.env.Theme;
 
 /**
  * Equipment agent. Represents a specific unit of kitchen equipment

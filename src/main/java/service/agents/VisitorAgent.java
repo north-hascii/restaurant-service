@@ -11,10 +11,9 @@ import service.Main;
 import service.annotationsetup.SetAnnotationNumber;
 import service.behaviour.MyBehaviour;
 import service.configuration.JadeAgent;
-import service.models.dishCard.DishCardList;
 import service.models.order.Order;
-import service.util.JSONParser;
-import service.util.Theme;
+import service.util.info.JSONParser;
+import service.util.env.Theme;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,7 +29,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @JadeAgent()
 public class VisitorAgent extends Agent implements SetAnnotationNumber {
     private final String AGENT_TYPE = AgentTypes.VISITOR_AGENT;
-    private final String ONTOLOGY = OntologiesTypes.SUPERVISOR_AGENT;
     private Order order;
     private static AtomicInteger visitorCounter = new AtomicInteger(Main.db.getOrderList().visitors_orders.size());
 
@@ -62,7 +60,10 @@ public class VisitorAgent extends Agent implements SetAnnotationNumber {
             ex.printStackTrace();
         }
 
-        addBehaviour(new MyBehaviour(JSONParser.gson.toJson(order), OntologiesTypes.VISITOR_SUPERVISOR, AgentTypes.SUPERVISOR_AGENT));
+        addBehaviour(new MyBehaviour(JSONParser.gson.toJson(order),
+                OntologiesTypes.VISITOR_SUPERVISOR,
+                AgentTypes.SUPERVISOR_AGENT)
+        );
         addBehaviour(new ListenServer());
     }
 
@@ -83,11 +84,6 @@ public class VisitorAgent extends Agent implements SetAnnotationNumber {
     }
 
     private class ListenServer extends Behaviour {
-//        OrderAgent orderAgent;
-//
-//        public ListenServer(OrderAgent orderAgent) {
-//            this.orderAgent = orderAgent;
-//        }
 
         public void action() {
             ACLMessage msg = myAgent.receive();
@@ -95,12 +91,17 @@ public class VisitorAgent extends Agent implements SetAnnotationNumber {
                 if (msg.getOntology().equals(OntologiesTypes.SUPERVISOR_VISITOR)) {
                     visitorCounter.decrementAndGet();
                     if (visitorCounter.get() == 0) {
-                        myAgent.addBehaviour(new MyBehaviour("Delete supervisitor", OntologiesTypes.VISITOR_DELETE_SUPERVISOR, msg.getSender()));
-                        Theme.print("!!!!!!!!!! ALL ORDERS ARE READY", Theme.GREEN);
+                        myAgent.addBehaviour(new MyBehaviour("Delete supervisitor",
+                                OntologiesTypes.VISITOR_DELETE_SUPERVISOR,
+                                msg.getSender())
+                        );
+                        Theme.print("! ALL ORDERS ARE READY", Theme.GREEN);
                     }
 
                     var dishCardsJson = msg.getContent();
-                    Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + dishCardsJson, Theme.PURPLE);
+                    Theme.print(AGENT_TYPE + " " + myAgent.getName() +
+                            " got message from " + msg.getSender().getName() + ": " + dishCardsJson, Theme.PURPLE
+                    );
                     myAgent.doDelete();
                 }
             } else {

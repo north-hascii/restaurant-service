@@ -1,4 +1,4 @@
-package service.util;
+package service.util.info;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

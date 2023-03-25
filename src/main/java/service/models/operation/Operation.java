@@ -1,6 +1,6 @@
 package service.models.operation;
 
-import service.util.JSONParser;
+import service.util.info.JSONParser;
 
 import java.util.ArrayList;
 

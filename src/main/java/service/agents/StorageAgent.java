@@ -13,15 +13,14 @@ import service.behaviour.MyBehaviour;
 import service.configuration.JadeAgent;
 import service.models.dishCard.DishCard;
 import service.models.dishCard.DishCardList;
-import service.models.equipment.EquipmentList;
 import service.models.menuItem.MenuItem;
 import service.models.operation.Operation;
 import service.models.operation.ProductInfoInOperation;
 import service.models.order.Order;
 import service.models.order.OrderItem;
 import service.models.product.ProductInStorage;
-import service.util.JSONParser;
-import service.util.Theme;
+import service.util.info.JSONParser;
+import service.util.env.Theme;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,15 +28,11 @@ import java.util.HashMap;
 /**
  * Agent Warehouse.
  * Possible actions:
- * 1. Contain a list of active product Agents with their number
- * 2. "Submits" to the Management Agent
- * 3. "Checks" the sufficient amount of products for the dish, if successful, reserves the Product Agent
- * 4. Creates and destroys product agents
+ * 1. The Agent receives an order from the Order Agent and analyzes the dishes, returns a list of possible dishes
  */
 @JadeAgent(number = 1)
 public class StorageAgent extends Agent implements SetAnnotationNumber {
     private final String AGENT_TYPE = AgentTypes.STORAGE_AGENT;
-    private final String ONTOLOGY = "vodvopwenvwep";
 
     @Override
     protected void setup() {
@@ -50,7 +45,7 @@ public class StorageAgent extends Agent implements SetAnnotationNumber {
         ServiceDescription serviceDescription = new ServiceDescription();
         // From where pipe listens (when sending only setType, when receiving setType and setName)
         serviceDescription.setType(AgentTypes.STORAGE_AGENT);
-        serviceDescription.setName("fwefwefwefwe");
+        serviceDescription.setName(AgentTypes.STORAGE_AGENT);
 
         dfd.addServices(serviceDescription);
 
@@ -116,6 +111,7 @@ public class StorageAgent extends Agent implements SetAnnotationNumber {
                     myAgent.addBehaviour(new MyBehaviour(JSONParser.gson.toJson(verifiedDishCardList),
                             OntologiesTypes.STORAGE_ORDER, msg.getSender()));
                 } else if (msg.getOntology().equals(OntologiesTypes.SUPERVISOR_DELETE_STORAGE)) {
+                    Theme.print("Storage receives the command to die", Theme.BLUE);
                     myAgent.doDelete();
                 }
 

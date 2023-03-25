@@ -3,7 +3,6 @@ package service.agents;
 public class AgentTypes {
     public static final String VISITOR_AGENT = "visitor-agent";
     public static final String SUPERVISOR_AGENT = "supervisor-agent";
-    public static final String MAIN_AGENT = "main-agent";
     public static final String ORDER_AGENT = "order-agent";
     public static final String STORAGE_AGENT = "storage-agent";
     public static final String PROCESS_AGENT = "process-agent";

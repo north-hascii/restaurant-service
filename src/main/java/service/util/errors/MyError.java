@@ -1,4 +1,4 @@
-package service.models;
+package service.util.errors;
 
 public class MyError {
         public String err_type;
