@@ -1,6 +1,5 @@
 package service.agents;
 
-import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.domain.DFService;
@@ -11,6 +10,7 @@ import jade.lang.acl.ACLMessage;
 import jade.wrapper.StaleProxyException;
 import service.annotationsetup.SetAnnotationNumber;
 import service.behaviour.MyBehaviour;
+import service.models.ListIntClass;
 import service.models.cooker.Cooker;
 import service.models.dishCard.DishCard;
 import service.models.operation.Operation;
@@ -41,6 +41,7 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
     private AtomicInteger CookerOperationCounter = new AtomicInteger(0);
     private List<Operation> operationList = new ArrayList<>();
 
+    private ArrayList<Integer> listOfOpersId = new ArrayList<>();
 //    private int process
 //    private String processAgent = "1";
 
@@ -56,7 +57,7 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
                 cookerID = (Integer) args[1];
             }
         }
-        Theme.print(AGENT_TYPE + ": " + getAID().getName() + " is ready.", Theme.GREEN);
+        Theme.print(AGENT_TYPE + ": " + getAID().getName() + " is ready. ID = " + cooker.cook_id, Theme.GREEN);
 //        System.out.println(cooker + " " + cookerID);
 
         DFAgentDescription dfd = new DFAgentDescription();
@@ -106,6 +107,8 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
             ACLMessage msg = myAgent.receive();
             if (msg != null) {
                 if (msg.getOntology().equals(OntologiesTypes.PROCESS_COOKER)) {
+                    cookerAgent.cooker.cook_active = false;
+
 //                    processAgent = msg.getSender();
                     var dataFromProcessJSON = msg.getContent();
 
@@ -118,19 +121,31 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
                     processID = dataFromProcess.processID;
 //                    cookerAgent.cooker.cook_active = true;
 //                    myAgent.doWait(10000);
-                    cookerAgent.cooker.cook_active = false;
 //                    System.out.println(dishCard);
 //                    System.out.println("!!!!!!!!! " +  processID);
 //                    processCounter++;
                     cookDish(dishCard);
                 } else if (msg.getOntology().equals(OntologiesTypes.OPERATION_COOKER)) {
-                    addBehaviour(new MyBehaviour(JSONParser.gson.toJson("Delete OperationAgent"), OntologiesTypes.COOKER_OPERATION, msg.getSender()));
+                    addBehaviour(new MyBehaviour(JSONParser.gson.toJson("Delete OperationAgent"),
+                            OntologiesTypes.COOKER_OPERATION, msg.getSender())
+                    );
+
 //                    Cooker = new AtomicInteger(CookerOperationCounter.get() - 1);
-                    CookerOperationCounter.decrementAndGet();
-                    System.out.println("After deleting operation: " + CookerOperationCounter);
-                    if (CookerOperationCounter.get() == 0 && startedOperations.get()) {
-                        System.out.println("from ProcessAgent: " + processID);
-                        addBehaviour(new MyBehaviour(JSONParser.gson.toJson(operationList), OntologiesTypes.COOKER_PROCESS, AgentTypes.PROCESS_AGENT, processID - 1));
+
+                    int cookerId = CookerOperationCounter.decrementAndGet();
+                    System.out.println("After deleting operation: " + cookerId);
+
+                    if (cookerId == 0 && startedOperations.get()) {
+                        System.out.println("from ProcessAgent: " + (processID - 1));
+//                        ArrayList<Integer> opList = new OperationList((ArrayList<Operation>) operationList);
+
+                        ListIntClass listIntClass = new ListIntClass(listOfOpersId);
+
+                        addBehaviour(new MyBehaviour(JSONParser.gson.toJson(listIntClass),
+                                OntologiesTypes.COOKER_PROCESS,
+                                AgentTypes.PROCESS_AGENT,
+                                processID - 1)
+                        );
                     }
                 }
             } else {
@@ -141,31 +156,40 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
         //        private static AtomicInteger operationCounter = new AtomicInteger(0);
         private static AtomicBoolean startedOperations = new AtomicBoolean(false);
 
-        HashMap<Integer, List<Operation>> operationLevelMap = new HashMap<>();
+        HashMap<Integer, List<Operation>> operAsyncLevelsMap = new HashMap<>();
 
         private void cookDish(DishCard dishCard) {
-            operationLevelMap = new HashMap<>();
+            // Parallelism
+            listOfOpersId = new ArrayList<>();
+            operAsyncLevelsMap = new HashMap<>();
             for (var operation : dishCard.operations) {
-                var list = operationLevelMap.get(operation.oper_async_point);
+                var list = operAsyncLevelsMap.get(operation.oper_async_point);
                 if (list == null) {
                     list = new ArrayList<>();
                 }
                 list.add(operation);
-                operationLevelMap.put(operation.oper_async_point, list);
+                operAsyncLevelsMap.put(operation.oper_async_point, list);
             }
-            HashSet<Integer> concurrentLevelSet = new HashSet<>(operationLevelMap.keySet());
+
+            HashSet<Integer> concurrentLevelSet = new HashSet<>(operAsyncLevelsMap.keySet());
             var controller = myAgent.getContainerController();
             for (var concurrentLevel : concurrentLevelSet) {
-                var operations = operationLevelMap.get(concurrentLevel);
+                List<Operation> operations = operAsyncLevelsMap.get(concurrentLevel);
                 for (var op : operations) {
                     try {
-                        controller.createNewAgent("OperationAgent" + operationCounter.addAndGet(1),
+                        int operId = operationCounter.addAndGet(1);
+                        controller.createNewAgent("OperationAgent" + operId,
                                 OperationAgent.class.getName(),
                                 new Object[]{cooker, op.oper_time, processID, dishCard.card_id, cookerID}
                         ).start();
+                        System.out.println(myAgent.getName() + " | operId " + operId);
+
+                        listOfOpersId.add(operId);
+
                         operationList.add(op);
-                        cookerAgent.CookerOperationCounter.addAndGet(1);
-                        System.out.println(myAgent.getName() + ": " + cookerAgent.CookerOperationCounter);
+
+                        int cookerId = cookerAgent.CookerOperationCounter.addAndGet(1);
+                        System.out.println(myAgent.getName() + " | CookerOperationCounter |: " + cookerAgent.CookerOperationCounter);
 //                        operationCounter = new AtomicInteger(operationCounter.get() + 1);
                         startedOperations.set(true);
 

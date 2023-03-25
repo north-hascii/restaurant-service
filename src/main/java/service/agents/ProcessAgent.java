@@ -1,5 +1,6 @@
 package service.agents;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.domain.DFService;
@@ -10,6 +11,7 @@ import jade.lang.acl.ACLMessage;
 import service.Main;
 import service.annotationsetup.SetAnnotationNumber;
 import service.behaviour.MyBehaviour;
+import service.models.ListIntClass;
 import service.models.cooker.Cooker;
 import service.models.dishCard.DishCard;
 import service.models.equipment.Equipment;
@@ -163,20 +165,23 @@ public class ProcessAgent extends Agent implements SetAnnotationNumber {
             if (msg != null) {
                 if (msg.getOntology().equals(OntologiesTypes.COOKER_PROCESS)) {
                     var json = msg.getContent();
-                    System.out.println(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + json);
-//                    OperationList operationList = JSONParser.gson.fromJson(json, OperationList.class);
-//                    end = new Date();
-//                    ArrayList<ProcessOperation> processOperationList = new ArrayList<>();
-//                    for (var op : operationList.operations) {
-//                        processOperationList.add(new ProcessOperation(op.oper_type));
-//                    }
-//
-//                    ProcessLog processLog = new ProcessLog(processID, dishCard.card_id, begin, end,
-//                            false, processOperationList);
-//
-//                    MyLog.LogOperation(JSONParser.gson.toJson(processLog));
-//
-//                    myAgent.doDelete();
+                    System.out.println("LOG" + AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + json);
+                    ListIntClass listOfOpersId = JSONParser.gson.fromJson(json, ListIntClass.class);
+
+                    end = new Date();
+
+                    ArrayList<ProcessOperation> processOperationList = new ArrayList<>();
+                    for (var operationId : listOfOpersId.list) {
+                        processOperationList.add(new ProcessOperation(operationId));
+                    }
+
+                    ProcessLog processLog = new ProcessLog(
+                            processID, dishCard.card_id, begin, end, false, processOperationList
+                    );
+
+                    MyLog.LogProcess(JSONParser.gson.toJson(processLog));
+
+                    myAgent.doDelete();
                 }
             } else {
                 block();

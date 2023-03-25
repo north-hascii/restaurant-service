@@ -8,7 +8,6 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
-import service.Main;
 import service.util.MyLog;
 import service.annotationsetup.SetAnnotationNumber;
 import service.behaviour.MyBehaviour;
@@ -18,6 +17,7 @@ import service.util.JSONParser;
 import service.util.Theme;
 
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -28,7 +28,7 @@ import java.util.Date;
 //@JadeAgent(number = 5)
 public class OperationAgent extends Agent implements SetAnnotationNumber {
     private static String AGENT_TYPE = AgentTypes.OPERATION_AGENT;
-    private static Integer operationCounter = 0;
+    private static AtomicInteger operIdCounter = new AtomicInteger(0);
 
     private Cooker cooker;
     private Double timeout;
@@ -64,6 +64,7 @@ public class OperationAgent extends Agent implements SetAnnotationNumber {
         }
 
         Theme.print(AGENT_TYPE + ": " + getAID().getName() + " is ready." + cooker + timeout + " " + cookerID, Theme.GREEN);
+        Theme.print(AGENT_TYPE + " created by " + cooker.cook_id, Theme.PURPLE);
 
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
@@ -82,7 +83,9 @@ public class OperationAgent extends Agent implements SetAnnotationNumber {
         end = new Date();
 
         addBehaviour(new ListenServer());
-        addBehaviour(new MyBehaviour(JSONParser.gson.toJson("Success"), OntologiesTypes.OPERATION_COOKER, AgentTypes.COOKER_AGENT, cookerID));
+        addBehaviour(new MyBehaviour(JSONParser.gson.toJson("Success"),
+                OntologiesTypes.OPERATION_COOKER, AgentTypes.COOKER_AGENT, cookerID)
+        );
     }
 
     @Override
@@ -115,7 +118,7 @@ public class OperationAgent extends Agent implements SetAnnotationNumber {
                 Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + dishCardJson, Theme.RESET);
 
 //                }
-                OperationLog operationLog = new OperationLog(operationCounter, processID, dishCardID, begin, end, cooker.cook_id, false);
+                OperationLog operationLog = new OperationLog(operIdCounter.addAndGet(1), processID, dishCardID, begin, end, cooker.cook_id, false);
 
                 MyLog.LogOperation(JSONParser.gson.toJson(operationLog));
 
