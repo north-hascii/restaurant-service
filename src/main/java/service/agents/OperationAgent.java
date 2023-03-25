@@ -1,6 +1,5 @@
 package service.agents;
 
-import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.domain.DFService;
@@ -8,7 +7,6 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
-import service.Main;
 import service.util.MyLog;
 import service.annotationsetup.SetAnnotationNumber;
 import service.behaviour.MyBehaviour;
@@ -18,6 +16,7 @@ import service.util.JSONParser;
 import service.util.Theme;
 
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -28,7 +27,7 @@ import java.util.Date;
 //@JadeAgent(number = 5)
 public class OperationAgent extends Agent implements SetAnnotationNumber {
     private static String AGENT_TYPE = AgentTypes.OPERATION_AGENT;
-    private static Integer operationCounter = 0;
+    public static AtomicInteger operationIdCounter = new AtomicInteger(0);
 
     private Cooker cooker;
     private Double timeout;
@@ -36,8 +35,9 @@ public class OperationAgent extends Agent implements SetAnnotationNumber {
     private Integer dishCardID;
     private Date begin;
     private Date end;
-    private AID cookerAID;
     private Integer cookerID;
+
+    private Integer myID;
 
     @Override
     protected void setup() {
@@ -55,15 +55,15 @@ public class OperationAgent extends Agent implements SetAnnotationNumber {
             if (args[3] instanceof Integer) {
                 dishCardID = (Integer) args[3];
             }
-//            if (args[4] instanceof AID) {
-//                cookerAID = (AID) args[4];
-//            }
             if (args[4] instanceof Integer) {
                 cookerID = (Integer) args[4];
             }
+            if (args[5] instanceof Integer) {
+                myID = (Integer) args[5];
+            }
         }
 
-        Theme.print(AGENT_TYPE + ": " + getAID().getName() + " is ready." + cooker + timeout + " " + cookerID, Theme.GREEN);
+        Theme.print(AGENT_TYPE + ": " + getAID().getName() + " with myID=" + myID + " is ready." + cooker + timeout + " " + cookerID, Theme.GREEN);
 
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
@@ -101,25 +101,20 @@ public class OperationAgent extends Agent implements SetAnnotationNumber {
     }
 
     private class ListenServer extends Behaviour {
-        Double timeout;
-
-//        public ListenServer(Double timeout) {
-//            this.timeout = timeout;
-//        }
 
         public void action() {
             ACLMessage msg = myAgent.receive();
             if (msg != null) {
-//                if (msg.getOntology().equals(OntologiesTypes.processToCooker)) {
-                var dishCardJson = msg.getContent();
-                Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + dishCardJson, Theme.RESET);
+                if (msg.getOntology().equals(OntologiesTypes.COOKER_OPERATION)) {
+                    var dishCardJson = msg.getContent();
+                    Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + dishCardJson, Theme.RESET);
+                    OperationLog operationLog = new OperationLog(myID, processID, dishCardID, begin, end, cooker.cook_id, false);
 
-//                }
-                OperationLog operationLog = new OperationLog(operationCounter, processID, dishCardID, begin, end, cooker.cook_id, false);
+                    MyLog.LogOperation(JSONParser.gson.toJson(operationLog));
 
-                MyLog.LogOperation(JSONParser.gson.toJson(operationLog));
+                    myAgent.doDelete();
+                }
 
-                myAgent.doDelete();
             } else {
                 block();
             }

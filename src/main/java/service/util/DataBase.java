@@ -48,7 +48,7 @@ public class DataBase {
     public ConcurrentHashMap<Integer, ProductType> productTypesMap = new ConcurrentHashMap<>();
     public ConcurrentHashMap<Integer, Integer> cookerIdIndexMap = new ConcurrentHashMap<>();
 
-    public static AtomicInteger operationCounter = new AtomicInteger(0);
+//    public static AtomicInteger operationCounter = new AtomicInteger(0);
 
     public EquipmentList getEquipmentList() {
         return equipmentList;

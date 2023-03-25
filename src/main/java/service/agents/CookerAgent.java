@@ -1,6 +1,5 @@
 package service.agents;
 
-import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.domain.DFService;
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static service.util.DataBase.operationCounter;
 
 /**
  * Agent cook. Represents a specific person
@@ -40,6 +38,8 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
     private Integer cookerID;
     private AtomicInteger CookerOperationCounter = new AtomicInteger(0);
     private List<Operation> operationList = new ArrayList<>();
+
+    private ArrayList<Integer> opersID = new ArrayList<>();
 
 //    private int process
 //    private String processAgent = "1";
@@ -94,9 +94,6 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
     private class ListenServer extends Behaviour {
         CookerAgent cookerAgent;
         private Integer processID;
-        private String processAgent = "22";
-
-//        private AID process;
 
         public ListenServer(CookerAgent cookerAgent) {
             this.cookerAgent = cookerAgent;
@@ -106,31 +103,24 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
             ACLMessage msg = myAgent.receive();
             if (msg != null) {
                 if (msg.getOntology().equals(OntologiesTypes.PROCESS_COOKER)) {
-//                    processAgent = msg.getSender();
                     var dataFromProcessJSON = msg.getContent();
 
-                    Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " +
-                            msg.getSender().getName() + ": " + dataFromProcessJSON, Theme.RESET
-                    );
+                    Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + dataFromProcessJSON, Theme.RESET);
 
                     var dataFromProcess = JSONParser.gson.fromJson(dataFromProcessJSON, DataFromProcess.class);
                     var dishCard = dataFromProcess.dishCard;
                     processID = dataFromProcess.processID;
-//                    cookerAgent.cooker.cook_active = true;
-//                    myAgent.doWait(10000);
+
                     cookerAgent.cooker.cook_active = false;
-//                    System.out.println(dishCard);
-//                    System.out.println("!!!!!!!!! " +  processID);
-//                    processCounter++;
                     cookDish(dishCard);
                 } else if (msg.getOntology().equals(OntologiesTypes.OPERATION_COOKER)) {
                     addBehaviour(new MyBehaviour(JSONParser.gson.toJson("Delete OperationAgent"), OntologiesTypes.COOKER_OPERATION, msg.getSender()));
-//                    Cooker = new AtomicInteger(CookerOperationCounter.get() - 1);
-                    CookerOperationCounter.decrementAndGet();
-                    System.out.println("After deleting operation: " + CookerOperationCounter);
-                    if (CookerOperationCounter.get() == 0 && startedOperations.get()) {
-                        System.out.println("from ProcessAgent: " + processID);
-                        addBehaviour(new MyBehaviour(JSONParser.gson.toJson(operationList), OntologiesTypes.COOKER_PROCESS, AgentTypes.PROCESS_AGENT, processID - 1));
+                    var operationCounter = CookerOperationCounter.decrementAndGet();
+//                    System.out.println("After deleting operation: " + operCounter);
+                    if (operationCounter == 0 && startedOperations.get()) {
+//                        System.out.println("from ProcessAgent: " + processID);
+                        addBehaviour(new MyBehaviour(JSONParser.gson.toJson(new OperationIdList(opersID)),
+                                OntologiesTypes.COOKER_PROCESS, AgentTypes.PROCESS_AGENT, processID - 1));
                     }
                 }
             } else {
@@ -138,12 +128,12 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
             }
         }
 
-        //        private static AtomicInteger operationCounter = new AtomicInteger(0);
         private static AtomicBoolean startedOperations = new AtomicBoolean(false);
 
         HashMap<Integer, List<Operation>> operationLevelMap = new HashMap<>();
 
         private void cookDish(DishCard dishCard) {
+            opersID = new ArrayList<>();
             operationLevelMap = new HashMap<>();
             for (var operation : dishCard.operations) {
                 var list = operationLevelMap.get(operation.oper_async_point);
@@ -159,25 +149,19 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
                 var operations = operationLevelMap.get(concurrentLevel);
                 for (var op : operations) {
                     try {
-                        controller.createNewAgent("OperationAgent" + operationCounter.addAndGet(1),
+                        var operationID = OperationAgent.operationIdCounter.incrementAndGet();
+                        CookerOperationCounter.addAndGet(1);
+                        opersID.add(operationID);
+                        controller.createNewAgent("OperationAgent" + operationID,
                                 OperationAgent.class.getName(),
-                                new Object[]{cooker, op.oper_time, processID, dishCard.card_id, cookerID}
-                        ).start();
-                        operationList.add(op);
-                        cookerAgent.CookerOperationCounter.addAndGet(1);
-                        System.out.println(myAgent.getName() + ": " + cookerAgent.CookerOperationCounter);
-//                        operationCounter = new AtomicInteger(operationCounter.get() + 1);
+                                new Object[]{cooker, op.oper_time, processID, dishCard.card_id, cookerID, operationID}).start();
                         startedOperations.set(true);
 
+                        System.out.println(myAgent.getName() + ": " + operationID);
                     } catch (StaleProxyException e) {
                         throw new RuntimeException(e);
                     }
-
-//                    operationCounter.addAndGet(1);
-//                    System.out.println(myAgent.getName() + ": " + operationCounter.addAndGet(1));
-//                    operationCounter = new AtomicInteger(operationCounter.get() + 1);
                 }
-
             }
         }
 

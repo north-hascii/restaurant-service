@@ -127,19 +127,6 @@ public class ProcessAgent extends Agent implements SetAnnotationNumber {
 //        addBehaviour(new MyBehaviour(JSONParser.gson.toJson(dishCard), OntologiesTypes.PROCESS_EQUIPMENT, AgentTypes.EQUIPMENT_AGENT, equipmentId));
     }
 
-//    private static Integer operationCounter = 0;
-//
-//    private void createOperations() {
-//        var controller = getContainerController();
-//        for (var operation : dishCard.operations) {
-//            try {
-//                controller.createNewAgent("OperationAgent" + operation, OperationAgent.class.getName(), new Order[]{visitorOrder}).start();
-//                orderCounter++;
-//            } catch (StaleProxyException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
-//    }
 
     @Override
     protected void takeDown() {
@@ -163,20 +150,23 @@ public class ProcessAgent extends Agent implements SetAnnotationNumber {
             if (msg != null) {
                 if (msg.getOntology().equals(OntologiesTypes.COOKER_PROCESS)) {
                     var json = msg.getContent();
-                    System.out.println(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + json);
-//                    OperationList operationList = JSONParser.gson.fromJson(json, OperationList.class);
-//                    end = new Date();
-//                    ArrayList<ProcessOperation> processOperationList = new ArrayList<>();
-//                    for (var op : operationList.operations) {
-//                        processOperationList.add(new ProcessOperation(op.oper_type));
-//                    }
-//
-//                    ProcessLog processLog = new ProcessLog(processID, dishCard.card_id, begin, end,
-//                            false, processOperationList);
-//
-//                    MyLog.LogOperation(JSONParser.gson.toJson(processLog));
-//
-//                    myAgent.doDelete();
+                    System.out.println("LOG" + AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + json);
+                    OperationIdList list = JSONParser.gson.fromJson(json, OperationIdList.class);
+
+                    end = new Date();
+
+                    ArrayList<ProcessOperation> processOperationList = new ArrayList<>();
+                    for (var operationId : list.operationIdList) {
+                        processOperationList.add(new ProcessOperation(operationId));
+                    }
+
+                    ProcessLog processLog = new ProcessLog(
+                            processID, dishCard.card_id, begin, end, false, processOperationList
+                    );
+
+                    MyLog.LogProcess(JSONParser.gson.toJson(processLog));
+
+                    myAgent.doDelete();
                 }
             } else {
                 block();
