@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <CustomLevels>
+        <CustomLevel name="OPERATION" intLevel="350" />
+        <CustomLevel name="PROCESS" intLevel="450" />
+        <CustomLevel name="MYERROR" intLevel="100" />
+    </CustomLevels>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+
+        <RollingFile name="ConsoleFileAppender" fileName="logs/logs.log"
+                     filePattern="logs/logs-%d{MM-dd-yy}.log.gz">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+            <Filters>
+                <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="10" />
+        </RollingFile>
+
+        <RollingFile name="OperationAppender" fileName="logs/operations.log"
+                     filePattern="logs/operations-%d{MM-dd-yy}.log.gz">
+            <PatternLayout pattern="%msg%n" />
+            <Filters>
+                <ThresholdFilter level="OPERATION" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="10" />
+        </RollingFile>
+
+        <RollingFile name="ProcessAppender" fileName="logs/processes.log"
+                     filePattern="logs/process-%d{MM-dd-yy}.log.gz">
+            <PatternLayout pattern="%msg%n" />
+            <Filters>
+                <ThresholdFilter level="PROCESS" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="10" />
+        </RollingFile>
+
+        <RollingFile name="MyErrorAppender" fileName="logs/error.log"
+                     filePattern="logs/error-%d{MM-dd-yy}.log.gz">
+            <PatternLayout pattern="%msg%n" />
+            <Filters>
+                <ThresholdFilter level="MYERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="10" />
+        </RollingFile>
+
+    </Appenders>
+
+    <Loggers>
+
+        <Root level="DEBUG">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="ConsoleFileAppender" />
+        </Root>
+
+        <logger name="OPERATION" level="OPERATION">
+            <AppenderRef ref="OperationAppender"/>
+        </logger>
+
+        <logger name="PROCESS" level="PROCESS">
+            <AppenderRef ref="ProcessAppender"/>
+        </logger>
+
+        <logger name="MYERROR" level="MYERROR">
+            <AppenderRef ref="MyErrorAppender"/>
+        </logger>
+
+    </Loggers>
+
+</Configuration>
