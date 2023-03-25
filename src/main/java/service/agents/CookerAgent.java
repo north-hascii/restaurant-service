@@ -41,9 +41,9 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
 
     private ArrayList<Integer> opersID = new ArrayList<>();
 
-//    private int process
+    //    private int process
 //    private String processAgent = "1";
-
+    String processAgentName;
 
     @Override
     protected void setup() {
@@ -56,7 +56,9 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
                 cookerID = (Integer) args[1];
             }
         }
+//        CookerOperationCounter = new AtomicInteger(0);
         Theme.print(AGENT_TYPE + ": " + getAID().getName() + " is ready.", Theme.GREEN);
+        Theme.print(AGENT_TYPE + ": " + cooker, Theme.PURPLE);
 //        System.out.println(cooker + " " + cookerID);
 
         DFAgentDescription dfd = new DFAgentDescription();
@@ -103,24 +105,29 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
             ACLMessage msg = myAgent.receive();
             if (msg != null) {
                 if (msg.getOntology().equals(OntologiesTypes.PROCESS_COOKER)) {
+//                    cookerAgent.cooker.cook_active = false;
                     var dataFromProcessJSON = msg.getContent();
 
                     Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + dataFromProcessJSON, Theme.RESET);
+                    Theme.print(AGENT_TYPE + " " + myAgent.getName() + " " + cooker, Theme.RESET);
 
                     var dataFromProcess = JSONParser.gson.fromJson(dataFromProcessJSON, DataFromProcess.class);
                     var dishCard = dataFromProcess.dishCard;
                     processID = dataFromProcess.processID;
+                    processAgentName = dataFromProcess.processAgentName;
 
-                    cookerAgent.cooker.cook_active = false;
+
                     cookDish(dishCard);
                 } else if (msg.getOntology().equals(OntologiesTypes.OPERATION_COOKER)) {
+//                    Theme.print(myAgent.getName() + " before deleting operCounter=" + CookerOperationCounter, Theme.PURPLE);
                     addBehaviour(new MyBehaviour(JSONParser.gson.toJson("Delete OperationAgent"), OntologiesTypes.COOKER_OPERATION, msg.getSender()));
                     var operationCounter = CookerOperationCounter.decrementAndGet();
-//                    System.out.println("After deleting operation: " + operCounter);
+//                    System.out.println("After deleting operation: " + operationCounter);
                     if (operationCounter == 0 && startedOperations.get()) {
 //                        System.out.println("from ProcessAgent: " + processID);
-                        addBehaviour(new MyBehaviour(JSONParser.gson.toJson(new OperationIdList(opersID)),
-                                OntologiesTypes.COOKER_PROCESS, AgentTypes.PROCESS_AGENT, processID - 1));
+//                        cooker.cook_active = false;
+                        addBehaviour(new MyBehaviour(JSONParser.gson.toJson(new OperationIdList(opersID)), OntologiesTypes.COOKER_PROCESS, AgentTypes.PROCESS_AGENT, processAgentName));
+//                        cookerAgent.cooker.cook_active = false;
                     }
                 }
             } else {
@@ -150,14 +157,13 @@ public class CookerAgent extends Agent implements SetAnnotationNumber {
                 for (var op : operations) {
                     try {
                         var operationID = OperationAgent.operationIdCounter.incrementAndGet();
-                        CookerOperationCounter.addAndGet(1);
+                        CookerOperationCounter.incrementAndGet();
                         opersID.add(operationID);
-                        controller.createNewAgent("OperationAgent" + operationID,
-                                OperationAgent.class.getName(),
-                                new Object[]{cooker, op.oper_time, processID, dishCard.card_id, cookerID, operationID}).start();
+                        Theme.print(myAgent.getName() + " started operation: " + operationID + " currOperCounter=" + CookerOperationCounter, Theme.PURPLE);
+                        controller.createNewAgent("OperationAgent" + operationID, OperationAgent.class.getName(), new Object[]{cooker, op.oper_time, processID, dishCard.card_id, cookerID, operationID, myAgent.getName()}).start();
                         startedOperations.set(true);
 
-                        System.out.println(myAgent.getName() + ": " + operationID);
+
                     } catch (StaleProxyException e) {
                         throw new RuntimeException(e);
                     }

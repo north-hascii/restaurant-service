@@ -8,24 +8,33 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import service.agents.OntologiesTypes;
 import service.util.JsonMessage;
+import service.util.Theme;
 
 public class MyBehaviour extends Behaviour {
     String message;
     String ontology;
-    String serviceType;
+    String agentType;
     AID name = null;
     Integer id = 0;
+    String receiverName;
 
-    public MyBehaviour(String message, String ontology, String serviceType) {
+    public MyBehaviour(String message, String ontology, String agentType) {
         this.message = message;
         this.ontology = ontology;
-        this.serviceType = serviceType;
+        this.agentType = agentType;
     }
 
-    public MyBehaviour(String message, String ontology, String serviceType, Integer id) {
+    public MyBehaviour(String message, String ontology, String agentType, String receiverName) {
         this.message = message;
         this.ontology = ontology;
-        this.serviceType = serviceType;
+        this.agentType = agentType;
+        this.receiverName = receiverName;
+    }
+
+    public MyBehaviour(String message, String ontology, String agentType, Integer id) {
+        this.message = message;
+        this.ontology = ontology;
+        this.agentType = agentType;
         this.id = id;
     }
 
@@ -46,12 +55,24 @@ public class MyBehaviour extends Behaviour {
         JsonMessage cfp = new JsonMessage(ACLMessage.CFP);
         DFAgentDescription template = new DFAgentDescription();
         ServiceDescription sd = new ServiceDescription();
-        sd.setType(serviceType);
+        sd.setType(agentType);
         template.addServices(sd);
         try {
             if (name == null) {
                 DFAgentDescription[] result = DFService.search(myAgent, template);
-                name = result[id].getName();
+                if (receiverName != null) {
+                    for (var agent : result) {
+                        if (agent.getName().equals(receiverName)) {
+                            name = agent.getName();
+                            break;
+                        }
+                    }
+                } else {
+                    Theme.print(result[id].getName().toString(), Theme.CYAN);
+                    name = result[id].getName();
+                }
+
+
             }
             cfp.addReceiver(name);
             cfp.setOntology(ontology);

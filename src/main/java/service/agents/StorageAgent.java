@@ -172,9 +172,9 @@ public class StorageAgent extends Agent implements SetAnnotationNumber {
                     continue;
                 }
 
-                if (!Main.db.equipmentMap.contains(dishRecipe.equip_type)) {
-                    continue;
-                }
+//                if (!Main.db.equipmentMap.contains(dishRecipe.equip_type)) {
+//                    continue;
+//                }
 //                var neededEquipment = Main.db.equipmentMap.get(dishRecipe.equip_type);
 
                 boolean flag = true;
