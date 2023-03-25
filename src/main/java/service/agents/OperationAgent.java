@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 //@JadeAgent(number = 5)
 public class OperationAgent extends Agent implements SetAnnotationNumber {
     private static String AGENT_TYPE = AgentTypes.OPERATION_AGENT;
-    public static AtomicInteger operationIdCounter = new AtomicInteger(0);
+    public static AtomicInteger operationIdCounter = new AtomicInteger(-1);
 
     private Cooker cooker;
     private Double timeout;
@@ -38,6 +38,7 @@ public class OperationAgent extends Agent implements SetAnnotationNumber {
     private Integer cookerID;
 
     private Integer myID;
+    private String cookerAgentName;
 
     @Override
     protected void setup() {
@@ -61,9 +62,12 @@ public class OperationAgent extends Agent implements SetAnnotationNumber {
             if (args[5] instanceof Integer) {
                 myID = (Integer) args[5];
             }
+            if (args[6] instanceof String) {
+                cookerAgentName = (String) args[6];
+            }
         }
 
-        Theme.print(AGENT_TYPE + ": " + getAID().getName() + " with myID=" + myID + " is ready." + cooker + timeout + " " + cookerID, Theme.GREEN);
+        Theme.print(AGENT_TYPE + ": " + getName() + " with myID=" + myID + " is ready." + cookerID + " " + cooker, Theme.GREEN);
 
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
@@ -82,7 +86,7 @@ public class OperationAgent extends Agent implements SetAnnotationNumber {
         end = new Date();
 
         addBehaviour(new ListenServer());
-        addBehaviour(new MyBehaviour(JSONParser.gson.toJson("Success"), OntologiesTypes.OPERATION_COOKER, AgentTypes.COOKER_AGENT, cookerID));
+        addBehaviour(new MyBehaviour(JSONParser.gson.toJson("Success"), OntologiesTypes.OPERATION_COOKER, AgentTypes.COOKER_AGENT, cookerAgentName));
     }
 
     @Override

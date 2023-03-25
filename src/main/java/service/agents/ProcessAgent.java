@@ -43,6 +43,8 @@ public class ProcessAgent extends Agent implements SetAnnotationNumber {
 
     private Date begin;
     private Date end;
+    private Equipment selectedEquipment;
+    private Cooker selectedCooker;
 
     @Override
     protected void setup() {
@@ -72,59 +74,62 @@ public class ProcessAgent extends Agent implements SetAnnotationNumber {
         }
 
         begin = new Date();
+
         prepareCookerAndEquipment();
-//        createOperations();
 
         addBehaviour(new ListenServer());
     }
 
+    private final Object monitor = new Object();
+
     private void prepareCookerAndEquipment() {
-        Boolean isCookerReady = false;
-        Boolean isEquipmentReady = false;
-        Cooker selectedCooker = null;
-        Equipment selectedEquipment = null;
-        // if equip_type is null
-        if (dishCard.equip_type == 0) {
-            isEquipmentReady = true;
-            selectedEquipment = new Equipment();
-        }
-        Theme.print(getAID().getName() + " started preparing...", Theme.YELLOW);
 
-        int cookerDBId = 0;
-        int equipmentId = 0;
-        while (!isCookerReady || !isEquipmentReady) {
-            cookerDBId = 0;
-//            for (int i = 0; i <Main.db.getCookersList().cookers.size() ; i++) {
-//                Main.db.getCookersList().cookers.get(i).cook_active = true;
-//            }
-            for (var cooker : Main.db.getCookersList().cookers) {
-                if (!cooker.cook_active) {
-                    isCookerReady = true;
-                    selectedCooker = cooker;
-                    break;
-                }
-                cookerDBId++;
+        synchronized (monitor) {
+            Boolean isCookerReady = false;
+            Boolean isEquipmentReady = false;
+//        Cooker selectedCooker = null;
+//        Equipment selectedEquipment = null;
+            // if equip_type is null
+            if (dishCard.equip_type == 0) {
+                isEquipmentReady = true;
+                selectedEquipment = new Equipment();
             }
-            equipmentId = 0;
-            for (var eq : Main.db.getEquipmentList().equipment) {
-                if (eq.equip_active && eq.equip_type == dishCard.equip_type) {
-                    isEquipmentReady = true;
-                    selectedEquipment = eq;
-                    break;
+            Theme.print(getAID().getName() + " started preparing...", Theme.YELLOW);
+
+            int cookerDBId = 0;
+            int equipmentId = 0;
+            while (!isCookerReady || !isEquipmentReady) {
+                cookerDBId = 0;
+                for (var cooker : Main.db.getCookersList().cookers) {
+                    if (!cooker.cook_active) {
+                        isCookerReady = true;
+                        selectedCooker = cooker;
+                        break;
+                    }
+                    cookerDBId++;
                 }
-                equipmentId++;
-            }
-            if (isCookerReady && isEquipmentReady) {
-//                Main.db.getCookersList().cookers.remove(cookerDBId);
-//                Main.db.getCookersList().cookers.get(cookerDBId).cook_active = true;
-                Theme.print(getAID().getName() + " finished preparing...", Theme.YELLOW);
-                DataFromProcess dataFromProcess = new DataFromProcess(processID, dishCard);
-                selectedCooker.cook_active = true;
-                addBehaviour(new MyBehaviour(JSONParser.gson.toJson(dataFromProcess), OntologiesTypes.PROCESS_COOKER, AgentTypes.COOKER_AGENT, cookerDBId));
+                equipmentId = 0;
+                for (var eq : Main.db.getEquipmentList().equipment) {
+                    if (!eq.equip_active.get() && eq.equip_type == dishCard.equip_type) {
+                        isEquipmentReady = true;
+                        selectedEquipment = eq;
+                        break;
+                    }
+                    equipmentId++;
+                }
+                if (isCookerReady && isEquipmentReady) {
+                    Theme.print(getAID().getName() + " finished preparing...", Theme.YELLOW);
+                    DataFromProcess dataFromProcess = new DataFromProcess(processID, dishCard, getName());
+                    selectedCooker.cook_active = true;
+//                selectedEquipment.equip_active = true;
+                    selectedEquipment.equip_active.set(true);
+                    Theme.print(getName() + " chose: " + selectedCooker + " " + selectedEquipment, Theme.BLUE);
+                    addBehaviour(new MyBehaviour(JSONParser.gson.toJson(dataFromProcess), OntologiesTypes.PROCESS_COOKER, AgentTypes.COOKER_AGENT, cookerDBId));
+                    addBehaviour(new MyBehaviour(JSONParser.gson.toJson(dishCard), OntologiesTypes.PROCESS_EQUIPMENT, AgentTypes.EQUIPMENT_AGENT, equipmentId));
+                }
             }
         }
 
-//        addBehaviour(new MyBehaviour(JSONParser.gson.toJson(dishCard), OntologiesTypes.PROCESS_EQUIPMENT, AgentTypes.EQUIPMENT_AGENT, equipmentId));
     }
 
 
@@ -149,12 +154,19 @@ public class ProcessAgent extends Agent implements SetAnnotationNumber {
             ACLMessage msg = myAgent.receive();
             if (msg != null) {
                 if (msg.getOntology().equals(OntologiesTypes.COOKER_PROCESS)) {
+                    Main.db.equipmentMap.get(selectedEquipment.equip_type);
+//                    selectedEquipment.equip_active = false;
+                    selectedEquipment.equip_active.set(false);
+                    selectedCooker.cook_active = false;
                     var json = msg.getContent();
                     System.out.println("LOG" + AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + json);
                     OperationIdList list = JSONParser.gson.fromJson(json, OperationIdList.class);
 
                     end = new Date();
 
+//                    Theme.print("selectedEq: " + selectedEquipment.toString(), Theme.BLUE);
+//                    selectedEquipment.equip_name = "PIZDA";
+//                    Theme.print("selectedEq: " + selectedEquipment.toString(), Theme.BLUE);
                     ArrayList<ProcessOperation> processOperationList = new ArrayList<>();
                     for (var operationId : list.operationIdList) {
                         processOperationList.add(new ProcessOperation(operationId));

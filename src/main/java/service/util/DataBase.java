@@ -26,9 +26,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class DataBase {
-    private CookerList cookerList;
-    private EquipmentList equipmentList;
-    private EquipmentTypeList equipmentTypeList;
+    public CookerList cookerList;
+    public EquipmentList equipmentList;
+    public EquipmentTypeList equipmentTypeList;
     private DishCardList dishCardList;
     private MenuItemList menuList;
     private OperationTypesList operationTypesList;
@@ -58,7 +58,7 @@ public class DataBase {
     public void setEquipmentList(EquipmentList equipmentList) {
         var list = equipmentList.equipment;
         // If equipment is broken (at start), then skip it
-        list.removeIf(item -> item.equip_active);
+        list.removeIf(item -> item.equip_active.get());
         this.equipmentList = equipmentList;
 
         for (var item : equipmentList.equipment) {

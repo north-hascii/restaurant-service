@@ -8,6 +8,8 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import service.annotationsetup.SetAnnotationNumber;
+import service.models.cooker.Cooker;
+import service.models.equipment.Equipment;
 import service.util.Theme;
 
 /**
@@ -18,10 +20,18 @@ import service.util.Theme;
 //@JadeAgent(number = 5)
 public class EquipmentAgent extends Agent implements SetAnnotationNumber {
     private static String AGENT_TYPE = AgentTypes.EQUIPMENT_AGENT;
+    private Equipment myEquipment;
 
     @Override
     protected void setup() {
+        Object[] args = getArguments();
+        if (args != null && args.length > 0) {
+            if (args[0] instanceof Equipment) {
+                myEquipment = (Equipment) args[0];
+            }
+        }
         Theme.print(AGENT_TYPE + ": " + getAID().getName() + " is ready.", Theme.GREEN);
+//        Theme.print(AGENT_TYPE + ": " + getAID().getName() + " " + myEquipment, Theme.RESET);
 
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
@@ -70,6 +80,7 @@ public class EquipmentAgent extends Agent implements SetAnnotationNumber {
 
                 Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " +
                         msg.getSender().getName() + ": " + dishCardJson, Theme.RESET);
+                Theme.print(AGENT_TYPE + ": " + getAID().getName() + " " + myEquipment, Theme.RESET);
 
 //                }
             } else {
