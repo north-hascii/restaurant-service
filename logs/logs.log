@@ -1,3 +1,5 @@
-2023-03-27 06:35:36.354 [OperationAgent3] OPERATION OPERATION - {"oper_id":0,"oper_proc":1,"oper_card":518,"oper_started":"2023-03-27T06:35:34","oper_ended":"2023-03-27T06:35:35","oper_coocker_id":16,"oper_active":false}
-2023-03-27 06:35:36.354 [OperationAgent1] OPERATION OPERATION - {"oper_id":0,"oper_proc":3,"oper_card":518,"oper_started":"2023-03-27T06:35:34","oper_ended":"2023-03-27T06:35:35","oper_coocker_id":14,"oper_active":false}
-2023-03-27 06:35:36.354 [OperationAgent2] OPERATION OPERATION - {"oper_id":0,"oper_proc":2,"oper_card":518,"oper_started":"2023-03-27T06:35:34","oper_ended":"2023-03-27T06:35:35","oper_coocker_id":15,"oper_active":false}
+2023-03-25 16:54:36.358 [OperationAgent0] OPERATION - {"oper_id":0,"oper_proc":3,"oper_card":518,"oper_started":"2023-03-25T16:54:34","oper_ended":"2023-03-25T16:54:36","oper_coocker_id":15,"oper_active":false}
+2023-03-25 16:54:36.358 [ProcessAgent2] PROCESS - {"proc_id":2,"ord_dish":518,"proc_started":"2023-03-25T16:54:34","proc_ended":"2023-03-25T16:54:36","proc_active":false,"proc_operations":[{"proc_oper":1}]}
+2023-03-25 16:54:36.358 [OperationAgent1] OPERATION - {"oper_id":1,"oper_proc":2,"oper_card":518,"oper_started":"2023-03-25T16:54:34","oper_ended":"2023-03-25T16:54:36","oper_coocker_id":15,"oper_active":false}
+2023-03-25 16:54:37.618 [OperationAgent2] OPERATION - {"oper_id":2,"oper_proc":1,"oper_card":518,"oper_started":"2023-03-25T16:54:36","oper_ended":"2023-03-25T16:54:37","oper_coocker_id":14,"oper_active":false}
+2023-03-25 16:54:37.619 [ProcessAgent1] PROCESS - {"proc_id":1,"ord_dish":518,"proc_started":"2023-03-25T16:54:34","proc_ended":"2023-03-25T16:54:37","proc_active":false,"proc_operations":[{"proc_oper":2}]}
