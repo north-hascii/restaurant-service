@@ -34,7 +34,8 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
     private DishCardList dishCardList = null;
 
     private static AtomicInteger processCounter = new AtomicInteger(0);
-
+    //    private A
+    private String supervisorAgentName;
 
     @Override
     protected void setup() {
@@ -42,6 +43,9 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
         if (args != null && args.length > 0) {
             if (args[0] instanceof Order) {
                 order = (Order) args[0];
+            }
+            if (args[1] instanceof String) {
+                supervisorAgentName = (String) args[1];
             }
         }
 
@@ -77,7 +81,7 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
         for (var dishCard : dishCardList.dish_cards) {
             try {
                 var processID = processCounter.addAndGet(1);
-                controller.createNewAgent("ProcessAgent" + processID, ProcessAgent.class.getName(), new Object[]{processID, dishCard}).start();
+                controller.createNewAgent("ProcessAgent" + processID, ProcessAgent.class.getName(), new Object[]{processID, dishCard, getName()}).start();
 //                processCounter.addAndGet(1);
             } catch (StaleProxyException e) {
                 throw new RuntimeException(e);
@@ -114,11 +118,15 @@ public class OrderAgent extends Agent implements SetAnnotationNumber {
             if (msg != null) {
                 if (msg.getOntology().equals(OntologiesTypes.STORAGE_ORDER)) {
                     var dishCardsJson = msg.getContent();
-                    System.out.println(AGENT_TYPE + " " + myAgent.getName() + " got message from " +
-                            msg.getSender().getName() + ": " + dishCardsJson);
+                    System.out.println(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + dishCardsJson);
                     dishCardList = JSONParser.gson.fromJson(dishCardsJson, DishCardList.class);
 //                    System.out.println(dishCardList);
                     createProcessAgents();
+                } else if (msg.getOntology().equals(OntologiesTypes.PROCESS_ORDER)) {
+                    var json = msg.getContent();
+                    System.out.println(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + json);
+                    addBehaviour(new MyBehaviour("Delete process.", OntologiesTypes.ORDER_DELETE_PROCESS, msg.getSender()));
+                    addBehaviour(new MyBehaviour(JSONParser.gson.toJson(order), OntologiesTypes.ORDER_SUPERVISOR, AgentTypes.SUPERVISOR_AGENT, supervisorAgentName));
                 }
             } else {
                 block();

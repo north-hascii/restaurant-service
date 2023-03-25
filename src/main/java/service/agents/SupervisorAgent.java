@@ -9,9 +9,12 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.wrapper.StaleProxyException;
 import service.annotationsetup.SetAnnotationNumber;
+import service.behaviour.MyBehaviour;
 import service.models.order.Order;
 import service.util.JSONParser;
 import service.util.Theme;
+
+import java.util.HashMap;
 
 import static java.lang.Thread.sleep;
 
@@ -29,6 +32,7 @@ import static java.lang.Thread.sleep;
 public class SupervisorAgent extends Agent implements SetAnnotationNumber {
     private final String AGENT_TYPE = AgentTypes.SUPERVISOR_AGENT;
     private final String ONTOLOGY = OntologiesTypes.SUPERVISOR_AGENT;
+    HashMap<String, String> visitorNameAgentNameMap = new HashMap<>();
 
     @Override
     protected void setup() {
@@ -39,8 +43,8 @@ public class SupervisorAgent extends Agent implements SetAnnotationNumber {
 
         ServiceDescription serviceDescription = new ServiceDescription();
         // From where pipe listens (when sending only setType, when receiving setType and setName)
-        serviceDescription.setType("visitor-supervisor");
-        serviceDescription.setName("visitor-supervisor");
+        serviceDescription.setType(AgentTypes.SUPERVISOR_AGENT);
+        serviceDescription.setName(AgentTypes.SUPERVISOR_AGENT);
 
         dfd.addServices(serviceDescription);
 
@@ -75,21 +79,39 @@ public class SupervisorAgent extends Agent implements SetAnnotationNumber {
         public void action() {
             ACLMessage msg = myAgent.receive();
             if (msg != null) {
-                var visitorOrderJSON = msg.getContent();
-                var visitorOrder = JSONParser.gson.fromJson(visitorOrderJSON, Order.class);
+                if (msg.getOntology().equals(OntologiesTypes.VISITOR_SUPERVISOR)) {
+                    var visitorOrderJSON = msg.getContent();
+                    var visitorOrder = JSONParser.gson.fromJson(visitorOrderJSON, Order.class);
+                    visitorNameAgentNameMap.put(visitorOrder.vis_name, msg.getSender().getName());
 
-                Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " +
-                        msg.getSender().getName() + ": " + visitorOrderJSON, Theme.RESET);
+                    Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + visitorOrderJSON, Theme.RESET);
 
-                // Read the message
-                var controller = myAgent.getContainerController();
-                try {
-                    controller.createNewAgent("OrderAgent" + orderCounter, OrderAgent.class.getName(),
-                            new Order[]{visitorOrder}).start();
-                    orderCounter++;
-                } catch (StaleProxyException e) {
-                    throw new RuntimeException(e);
+                    String supervisorAgentName = getName();
+
+                    // Read the message
+                    var controller = myAgent.getContainerController();
+                    try {
+                        controller.createNewAgent("OrderAgent" + orderCounter, OrderAgent.class.getName(), new Object[]{visitorOrder, supervisorAgentName}).start();
+                        orderCounter++;
+                    } catch (StaleProxyException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else if (msg.getOntology().equals(OntologiesTypes.ORDER_SUPERVISOR)) {
+                    var visitorOrderJSON = msg.getContent();
+                    var visitorOrder = JSONParser.gson.fromJson(visitorOrderJSON, Order.class);
+
+                    Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + visitorOrderJSON, Theme.BLUE);
+                    myAgent.addBehaviour(new MyBehaviour(JSONParser.gson.toJson(visitorOrder), OntologiesTypes.SUPERVISOR_VISITOR, AgentTypes.VISITOR_AGENT, visitorNameAgentNameMap.get(visitorOrder.vis_name)));
+                } else if (msg.getOntology().equals(OntologiesTypes.VISITOR_DELETE_SUPERVISOR)) {
+                    var visitorOrderJSON = msg.getContent();
+
+                    Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + visitorOrderJSON, Theme.BLUE);
+
+
+                    myAgent.addBehaviour(new MyBehaviour("Delete storage", OntologiesTypes.SUPERVISOR_DELETE_STORAGE, AgentTypes.STORAGE_AGENT));
+//                    myAgent.doDelete();
                 }
+
 
                 // New Agent Order by pipe supervisor-order with the value visitor_order
 //                myAgent.addBehaviour(new MyBehaviour(visitorOrderJSON, ONTOLOGY, "supervisor-storage"));

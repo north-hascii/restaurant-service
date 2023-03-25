@@ -52,7 +52,7 @@ class MainController {
     private void createVisitorAgent() throws StaleProxyException, Error {
         int counter = 0;
         for (var order : Main.db.getOrderList().visitors_orders) {
-            containerController.createNewAgent("VisitorAgent" + counter, VisitorAgent.class.getName(), new Order[]{order}).start();
+            containerController.createNewAgent("VisitorAgent" + order.vis_name, VisitorAgent.class.getName(), new Order[]{order}).start();
             counter += 1;
         }
     }

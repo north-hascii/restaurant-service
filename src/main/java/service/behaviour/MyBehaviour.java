@@ -45,7 +45,6 @@ public class MyBehaviour extends Behaviour {
         if (ontology.equals(OntologiesTypes.OPERATION_COOKER)) {
             System.out.println(name);
         }
-
     }
 
     boolean isSend = false;
@@ -60,6 +59,7 @@ public class MyBehaviour extends Behaviour {
         try {
             if (name == null) {
                 DFAgentDescription[] result = DFService.search(myAgent, template);
+                Theme.print(result[id].getName().toString(), Theme.CYAN);
                 if (receiverName != null) {
                     for (var agent : result) {
                         if (agent.getName().equals(receiverName)) {
@@ -68,7 +68,7 @@ public class MyBehaviour extends Behaviour {
                         }
                     }
                 } else {
-                    Theme.print(result[id].getName().toString(), Theme.CYAN);
+
                     name = result[id].getName();
                 }
 

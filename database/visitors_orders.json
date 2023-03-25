@@ -1,7 +1,7 @@
 {
     "visitors_orders": [
         {
-            "vis_name": " Visitor124",
+            "vis_name": "Visitor124",
             "vis_ord_started": "2023-02-28T11:09:07",
             "vis_ord_ended": "2023-02-28T11:12:51",
             "vis_ord_total": 59,
@@ -11,7 +11,7 @@
             }]
         },
         {
-            "vis_name": " Visitor123",
+            "vis_name": "Visitor123",
             "vis_ord_started": "2023-02-28T10:12:37",
             "vis_ord_ended": "2023-02-28T10:13:05",
             "vis_ord_total": 118,

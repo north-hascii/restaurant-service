@@ -13,20 +13,14 @@ import service.behaviour.MyBehaviour;
 import service.models.cooker.Cooker;
 import service.models.dishCard.DishCard;
 import service.models.equipment.Equipment;
-import service.models.operation.Operation;
-import service.models.operation.OperationList;
-import service.models.operation.OperationLog;
-import service.models.operation.OperationTypesList;
 import service.models.process.ProcessLog;
 import service.models.process.ProcessOperation;
 import service.util.JSONParser;
 import service.util.MyLog;
 import service.util.Theme;
 
-import java.net.http.WebSocket;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Process agent. Performs itself using Agents of Operations using cooks or kitchen equipment and cooks.
@@ -45,6 +39,7 @@ public class ProcessAgent extends Agent implements SetAnnotationNumber {
     private Date end;
     private Equipment selectedEquipment;
     private Cooker selectedCooker;
+    private String orderAgentName;
 
     @Override
     protected void setup() {
@@ -55,6 +50,9 @@ public class ProcessAgent extends Agent implements SetAnnotationNumber {
             }
             if (args[1] instanceof DishCard) {
                 dishCard = (DishCard) args[1];
+            }
+            if (args[2] instanceof String) {
+                orderAgentName = (String) args[2];
             }
         }
         Theme.print(AGENT_TYPE + ": " + getAID().getName() + " is ready.", Theme.GREEN);
@@ -153,12 +151,13 @@ public class ProcessAgent extends Agent implements SetAnnotationNumber {
         public void action() {
             ACLMessage msg = myAgent.receive();
             if (msg != null) {
+                var json = msg.getContent();
                 if (msg.getOntology().equals(OntologiesTypes.COOKER_PROCESS)) {
                     Main.db.equipmentMap.get(selectedEquipment.equip_type);
 //                    selectedEquipment.equip_active = false;
                     selectedEquipment.equip_active.set(false);
                     selectedCooker.cook_active = false;
-                    var json = msg.getContent();
+
                     System.out.println("LOG" + AGENT_TYPE + " " + myAgent.getName() + " got message from " + msg.getSender().getName() + ": " + json);
                     OperationIdList list = JSONParser.gson.fromJson(json, OperationIdList.class);
 
@@ -178,6 +177,13 @@ public class ProcessAgent extends Agent implements SetAnnotationNumber {
 
                     MyLog.LogProcess(JSONParser.gson.toJson(processLog));
 
+                    addBehaviour(new MyBehaviour("DishCard is ready.", OntologiesTypes.PROCESS_ORDER, AgentTypes.ORDER_AGENT, orderAgentName));
+
+//                    doWait(1000);
+//
+                } else if (msg.getOntology().equals(OntologiesTypes.ORDER_DELETE_PROCESS)) {
+                    Theme.print(AGENT_TYPE + " " + myAgent.getName() + " got message from " +
+                            msg.getSender().getName() + ": " + json, Theme.YELLOW);
                     myAgent.doDelete();
                 }
             } else {

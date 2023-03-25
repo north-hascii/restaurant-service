@@ -114,6 +114,8 @@ public class StorageAgent extends Agent implements SetAnnotationNumber {
                     }
                     myAgent.addBehaviour(new MyBehaviour(JSONParser.gson.toJson(verifiedDishCardList),
                             OntologiesTypes.STORAGE_ORDER, msg.getSender()));
+                } else if (msg.getOntology().equals(OntologiesTypes.SUPERVISOR_DELETE_STORAGE)) {
+                    myAgent.doDelete();
                 }
 
             } else {
