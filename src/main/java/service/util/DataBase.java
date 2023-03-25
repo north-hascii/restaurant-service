@@ -21,6 +21,7 @@ import service.models.product.ProductInStorageList;
 import service.models.product.ProductType;
 import service.models.product.ProductTypesList;
 
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -37,7 +38,7 @@ public class DataBase {
     private ProductTypesList productTypesList;
 
     public ConcurrentHashMap<Integer, Cooker> cookerMap = new ConcurrentHashMap<>();
-    public ConcurrentHashMap<Integer, Equipment> equipmentMap = new ConcurrentHashMap<>();
+    public ConcurrentHashMap<Integer, ArrayList<Equipment>> equipmentMap = new ConcurrentHashMap<>();
     public ConcurrentHashMap<Integer, EquipmentType> equipmentTypeMap = new ConcurrentHashMap<>();
     public ConcurrentHashMap<Integer, DishCard> dishCardsMap = new ConcurrentHashMap<>();
     public ConcurrentHashMap<Integer, MenuItem> menuMap = new ConcurrentHashMap<>();
@@ -55,9 +56,19 @@ public class DataBase {
     }
 
     public void setEquipmentList(EquipmentList equipmentList) {
+        var list = equipmentList.equipment;
+        // If equipment is broken (at start), then skip it
+        list.removeIf(item -> item.equip_active);
         this.equipmentList = equipmentList;
+
         for (var item : equipmentList.equipment) {
-            equipmentMap.put(item.equip_type, item);
+            if (equipmentMap.contains(item.equip_type)) {
+                equipmentMap.get(item.equip_type).add(item);
+            } else {
+                equipmentMap.put(item.equip_type, new ArrayList<>() {{
+                    add(item);
+                }});
+            }
         }
     }
 
@@ -132,8 +143,14 @@ public class DataBase {
     public void setProductInStorageList(ProductInStorageList productInStorageList) {
         this.productInStorageList = productInStorageList;
         for (var item : productInStorageList.products) {
-            productInStorageMap.put(item.prod_item_type, item);
             // TYPE !!!! NOT ID
+            if (productInStorageMap.contains(item.prod_item_type)) {
+                var product = productInStorageMap.get(item.prod_item_type);
+                product.prod_item_quantity += item.prod_item_quantity;
+                productInStorageMap.put(item.prod_item_type, product);
+            } else {
+                productInStorageMap.put(item.prod_item_type, item);
+            }
         }
     }
 

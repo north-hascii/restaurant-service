@@ -13,6 +13,7 @@ import service.behaviour.MyBehaviour;
 import service.configuration.JadeAgent;
 import service.models.dishCard.DishCard;
 import service.models.dishCard.DishCardList;
+import service.models.equipment.EquipmentList;
 import service.models.menuItem.MenuItem;
 import service.models.operation.Operation;
 import service.models.operation.ProductInfoInOperation;
@@ -170,6 +171,12 @@ public class StorageAgent extends Agent implements SetAnnotationNumber {
                 if (dishRecipe == null) {
                     continue;
                 }
+
+                if (!Main.db.equipmentMap.contains(dishRecipe.equip_type)) {
+                    continue;
+                }
+//                var neededEquipment = Main.db.equipmentMap.get(dishRecipe.equip_type);
+
                 boolean flag = true;
 
                 var operations = dishRecipe.operations;
