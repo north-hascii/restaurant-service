@@ -24,6 +24,7 @@ import service.util.JSONParser;
 import service.util.Theme;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Agent Warehouse.
@@ -172,14 +173,26 @@ public class StorageAgent extends Agent implements SetAnnotationNumber {
                     continue;
                 }
 
-                if (!Main.db.equipmentMap.contains(dishRecipe.equip_type)) {
+                boolean isTypeExist = true;
+                var keySet = Main.db.equipmentMap.keySet();
+                for (var key : keySet) {
+                    if (key == dishRecipe.equip_type) {
+                        isTypeExist = false;
+                        break;
+                    }
+                }
+                if (isTypeExist) {
                     continue;
                 }
+
 //                var neededEquipment = Main.db.equipmentMap.get(dishRecipe.equip_type);
 
-                boolean flag = true;
+                boolean isAllOperationsPossible = true;
 
                 var operations = dishRecipe.operations;
+
+                HashMap<Integer, Double> mapOfProducts = new HashMap<>();
+
                 for (Operation operation : operations) {
                     for (ProductInfoInOperation neededProduct : operation.oper_products) {
                         // I APPLY BY TYPE, NOT BY ID
@@ -196,15 +209,16 @@ public class StorageAgent extends Agent implements SetAnnotationNumber {
 
                         if (inStorage >= prodQuantity && inStorage - prodQuantity >= 0) {
                             // EVERYTHING is OK, the product is there, we reserve
-                            currentProduct.prod_item_quantity = inStorage - prodQuantity;
-                            Main.db.productInStorageMap.put(productType, currentProduct);
+                            mapOfProducts.put(productType, prodQuantity);
+//                            currentProduct.prod_item_quantity = inStorage - prodQuantity;
+//                            Main.db.productInStorageMap.put(productType, currentProduct);
                             if (Main.storageInfo >= 2) {
                                 System.out.println("OK, product " + currentProduct.prod_item_name + " reserved. " +
                                         "Left in the store " + currentProduct.prod_item_quantity);
                             }
                         } else {
                             // EVERYTHING is not ok, there is no product, WE do NOT reserve
-                            flag = false;
+                            isAllOperationsPossible = false;
 //                            if (Main.storageInfo >= 2) {
 
                             Theme.print("NOT OK, " +
@@ -215,8 +229,15 @@ public class StorageAgent extends Agent implements SetAnnotationNumber {
                         }
                     }
                 }
-                if (flag) {
+                if (isAllOperationsPossible) {
                     orderVerifiedOperations.add(dishRecipe);
+                    // subtract the necessary resources
+                    for (var productType : mapOfProducts.keySet()) {
+                        ProductInStorage currentProduct = Main.db.productInStorageMap.get(productType);
+                        double inStorage = currentProduct.prod_item_quantity;
+                        currentProduct.prod_item_quantity = inStorage - mapOfProducts.get(productType);
+                        Main.db.productInStorageMap.put(productType, currentProduct);
+                    }
                 }
             }
             if (Main.storageInfo >= 2) {
